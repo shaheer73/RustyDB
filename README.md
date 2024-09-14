@@ -72,3 +72,6 @@ In another terminal, run the client:
 ```bash
 cargo run --bin client
 ```
+
+# Authors
+Built by Noumaan & Shaheer.
