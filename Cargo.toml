@@ -8,5 +8,13 @@ tonic = "0.6"
 tokio = { version = "1", features = ["full"] }
 prost = "0.9"
 
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
 [build-dependencies]
 tonic-build = "0.6"

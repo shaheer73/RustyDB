@@ -1,6 +1,8 @@
 use kv_store::kv_store_client::KvStoreClient;
 use kv_store::{SetRequest, GetRequest, DeleteRequest};
 use tonic::transport::Channel;
+use std::time::Duration;  // Correct import for Duration
+use tokio::time::sleep;   // Correct import for async sleep
 
 mod kv_store {
     tonic::include_proto!("kv_store");
@@ -12,10 +14,23 @@ pub struct RustyDBClient {
 }
 
 impl RustyDBClient {
-    /// Creates a new client connected to the RustyDB server
+    /// Creates a new client connected to the RustyDB server with retry logic
     pub async fn new(addr: &str) -> Self {
-        let client = KvStoreClient::connect(addr.to_string()).await.unwrap();
-        Self { client }
+        let mut retries = 5;
+        while retries > 0 {
+            match KvStoreClient::connect(format!("http://{}:50051", addr)).await {
+                Ok(client) => {
+                    println!("Successfully connected to the server");
+                    return Self { client };
+                }
+                Err(_) => {
+                    retries -= 1;
+                    println!("Retrying connection to server... Attempts remaining: {}", retries);
+                    sleep(Duration::from_secs(2)).await;  // Now async sleep works
+                }
+            }
+        }
+        panic!("Could not connect to the server after several attempts");
     }
 
     /// Sets a key-value pair in the database
@@ -44,7 +59,8 @@ impl RustyDBClient {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut client = RustyDBClient::new("http://[::1]:50051").await;
+    // Connect to the server using the retry logic
+    let mut client = RustyDBClient::new("server").await;
 
     client.set("foo".to_string(), "bar".to_string()).await;
     client.get("foo".to_string()).await;
