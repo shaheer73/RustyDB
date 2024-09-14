@@ -1,30 +1,31 @@
+# Use the Rust image as the base
 FROM rust:1.71 as builder
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /usr/src/rustydb
 
-# Install rustfmt
-RUN rustup component add rustfmt
+# Copy the Cargo.toml and Cargo.lock files
+COPY Cargo.toml .
 
-# Copy Cargo.toml and Cargo.lock (Assuming Cargo.lock now exists)
-COPY Cargo.toml ./
-
-# Copy the rest of the project files
+# Copy the source code
 COPY src ./src
 COPY proto ./proto
-COPY build.rs ./
+COPY build.rs .
+
+# Install necessary components
+RUN rustup component add rustfmt
 
 # Build the client binary
 RUN cargo build --release --bin client
 
-# Use the same base image for running the binary
+# Final stage: use the same Rust image to run the client binary
 FROM rust:1.71
 
-# Set the working directory
-WORKDIR /usr/local/bin
+# Set the working directory for the final image
+WORKDIR /usr/src/rustydb
 
-# Copy the binary from the builder stage
+# Copy the built client binary from the builder stage
 COPY --from=builder /usr/src/rustydb/target/release/client .
 
-# Run the client binary
+# Set the command to run the client
 CMD ["./client"]

@@ -18,6 +18,7 @@ services:
       - server
     networks:
       - rustydb-net
+    command: ["./client"]
 
 networks:
   rustydb-net:
